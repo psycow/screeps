@@ -4,22 +4,23 @@ var roleMiner = {
         [WORK, WORK, MOVE],
         [WORK, WORK, WORK, MOVE, MOVE],
         [WORK, WORK, WORK, WORK, MOVE, MOVE],
+        [WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE],
         ],
     action: function (creep) {
         var source = Game.getObjectById(creep.memory.source);
         if(!source)
+        {
+            console.log(creep, 'problem with source', source)
             return;
-
-
-        for(var n in creep.memory.helpers) {
-            var id = creep.memory.helpers[n];
+        }
+        //for(var n in creep.memory.helpers) {
+        //    var id = creep.memory.helpers[n];
             //if(id && Game.creeps[id] == undefined) {
             //    delete creep.memory.helpers[id];
             //    console.log('clean dead helpers '+id+' for '+ creep.name)
             //}
             //console.log(creep.name, n, id, Game.creeps[id])
-        }
-
+        //}
 
         if(creep.harvest(source) == ERR_NOT_IN_RANGE) {
             creep.moveTo(source);
@@ -28,20 +29,29 @@ var roleMiner = {
 
 
     on_init: function(creep) {
-        creep.memory.is_near_source = false;
+        //creep.memory.is_near_source = false;
         this.set_source(creep);
     },
 
     set_source: function(creep) {
         console.log('find source');
 
+        /*
         for(var src_id in Memory.sources)
         {
             var miner = Memory.sources[src_id].miner;
             if(miner && Game.creeps[miner] == undefined)
                 delete Memory.sources[src_id];
         }
+        */
 
+        var sources = creep.room.find(FIND_SOURCES);
+        var miners = _.filter(Game.creeps, (c)=>c.memory.role=='miner');
+        sources = _.sortBy(sources, function(src) {
+            return _.sum(_.map(miners, (c)=>(c.memory.source == src.id) ));
+        });
+
+        /*
         var sources = creep.room.find(FIND_SOURCES, {
             filter: function(source)
             {
@@ -57,15 +67,15 @@ var roleMiner = {
 
                 return false;
             }
-        });
+        });*/
 
-        if(sources.length == 0)
+        if(!sources.length)
             return;
 
         var source = sources[0];
         console.log('found : ' + source);
 
-        Memory.sources[source.id] = { id: source.id, miner: creep.id};
+        //Memory.sources[source.id] = { id: source.id, miner: creep.id};
         creep.memory.source = source.id;
 
         var spawn = source.pos.findClosestByRange(FIND_MY_SPAWNS);

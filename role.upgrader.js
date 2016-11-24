@@ -2,10 +2,11 @@
 var roleUpgrader = {
     name: 'upgrader',
     parts: [
-        [WORK, CARRY, MOVE],
-        [WORK, CARRY, CARRY, MOVE, MOVE],
-        [WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
-        [WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
+        [WORK, CARRY,  MOVE],
+        [WORK, CARRY, CARRY,  MOVE,  MOVE],
+        [WORK, CARRY, CARRY, CARRY,  MOVE,  MOVE,  MOVE],
+        [WORK,  WORK, CARRY, CARRY, CARRY,  MOVE,  MOVE,  MOVE],
+        [WORK,  WORK,  WORK, CARRY, CARRY, CARRY,  MOVE,  MOVE,  MOVE,  MOVE,  MOVE],
     ],
     /** @param {Creep} creep **/
     action: function(creep)

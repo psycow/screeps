@@ -3,7 +3,8 @@ var roleHauler = {
     parts: [
         [CARRY, MOVE],
         [CARRY, CARRY, MOVE, MOVE],
-        [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE]
+        [CARRY, CARRY, CARRY, MOVE, MOVE, MOVE],
+        [CARRY, CARRY, CARRY, MOVE, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE]
     ],
 
     on_init: function(creep) {
@@ -32,7 +33,17 @@ var roleHauler = {
             {
                 var targets = creep.room.find(FIND_STRUCTURES, {
                     filter: (structure) => {
-                        return (structure.structureType == STRUCTURE_CONTAINER
+                        return (structure.structureType == STRUCTURE_TOWER
+                            &&  structure.energy < 250);
+                }});
+            }
+
+            if(!targets.length)
+            {
+                var targets = creep.room.find(FIND_STRUCTURES, {
+                    filter: (structure) => {
+                        return ((structure.structureType == STRUCTURE_CONTAINER
+                              || structure.structureType == STRUCTURE_STORAGE)
                            && _.sum(structure.store) < structure.storeCapacity);
                 }});
             }
@@ -57,7 +68,10 @@ var roleHauler = {
             var miner = Game.getObjectById(creep.memory.miner);
             if (miner == null) {
                 if(!this.assign_miner(creep))
-                    this.rest(creep);
+                {
+                    var scavenger = require('role.scavenger');
+                    scavenger.action(creep);
+                }
             }
 
             //console.log(creep+' Go to Miner '+miner);
@@ -84,7 +98,7 @@ var roleHauler = {
             if(assigned < miner.memory.haulers_needed)
             {
                 creep.memory.miner = miner.id;
-                //console.log('Assign miner "'+ miner.name +'" to hauler "'+ creep.name + '"');
+                console.log('Assign miner "'+ miner.name +'" to hauler "'+ creep.name + '"');
                 //console.log(creep.memory.miner);
                 //console.log(miner.id);
                 return false; // exit foreach

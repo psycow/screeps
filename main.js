@@ -1,6 +1,7 @@
 var spawner = require('spawner');
 var manager = require('manager');
-var tower = require('structure.tower');
+var tower = require('stucture.tower');
+
 
 var controller = {
 

@@ -1,12 +1,15 @@
 var extend = require('extend');
 var proto = require('role.prototype');
+var names = require('names');
+var config = require('config');
 
 module.exports = {
 
     population: {
         1: {miner:1, hauler:1, upgrader:1},
-        2: {miner:2, hauler:2, upgrader:3, builder:3, healer:1, guard:2, waller:1},
-        3: {miner:3, hauler:3, upgrader:4, builder:4, healer:2, guard:4, waller:2},
+        2: {miner:4, hauler:2, upgrader:3, builder:2, healer:1, guard:1, waller:1},
+        3: {miner:4, hauler:3, upgrader:4, builder:4, healer:1, guard:4, waller:2, taxi:0},
+        4: {miner:4, hauler:3, upgrader:2, builder:2, healer:0, guard:2, waller:0, taxi:4},
     },
 
     update: function() {
@@ -87,12 +90,16 @@ module.exports = {
         }
     },
 
-    spawn: function(role) {
+    spawn: function(role, memory) {
         var obj = this.get(role);
         if(!obj)
             return false;
+        if(memory == undefined)
+            memory = {};
+        memory.role = role;
         var body = obj.best_body();
-        var name = Game.spawns['Spawn1'].createCreep(body, undefined, {role: role});
+        var name = '[' + role + '] ' + names.get();
+        var name = Game.spawns['Spawn1'].createCreep(body, name, memory);
         if(name < 0) {
             console.log('unable to spawn', name);
             return false;

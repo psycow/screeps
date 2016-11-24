@@ -29,9 +29,10 @@ var proto = {
             resource_id = Game.RESOURCE_ENERGY;
 
         var targets = _.filter(creep.room.find(FIND_STRUCTURES), function(s) {
-                            return (s.structureType == STRUCTURE_CONTAINER &&
-                                    s.store[RESOURCE_ENERGY] > creep.carryCapacity)});
-        if(!targets.length)
+                            return ((s.structureType == STRUCTURE_CONTAINER
+                                  || s.structureType == STRUCTURE_STORAGE)
+                                    && s.store[RESOURCE_ENERGY] > 0)});
+        /*if(!targets.length)
         {
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: (structure) => {
@@ -40,12 +41,19 @@ var proto = {
                        && structure.energy == structure.energyCapacity)
                     );
             }});
+        }*/
+
+        if(targets.length) {
+            //console.log(_.pluck(targets, 'structureType'));
+            var target = creep.pos.findClosestByRange(targets)
+            if(creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(target);
+            };
         }
-        //console.log(_.pluck(targets, 'structureType'));
-        var target = creep.pos.findClosestByRange(targets)
-        if(creep.withdraw(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-            creep.moveTo(target);
-        };
+        else
+        {
+            this.rest(creep, 'RestArea2');
+        }
     },
 
     body_cost: function(body) {
@@ -68,7 +76,7 @@ var proto = {
     {
         var restTarget;
         if(!distance)
-            distance = 2;
+            distance = 0;
         if(flagName)
             restTarget = Game.flags[flagName];
         else
@@ -78,10 +86,10 @@ var proto = {
             return;
 
         if (creep.getActiveBodyparts(HEAL)) {
-            distance = distance - 1;
+            distance = distance + 1;
         }
         else if (creep.getActiveBodyparts(RANGED_ATTACK)) {
-            distance = distance + 1;
+            distance = distance + 3;
         }
         if (creep.pos.findPathTo(restTarget).length > distance) {
             creep.moveTo(restTarget);

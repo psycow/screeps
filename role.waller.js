@@ -37,7 +37,7 @@ var roleWallBuilder = {
                 filter: function(structure){
                     return (structure.structureType == STRUCTURE_WALL
                         ||  structure.structureType == STRUCTURE_RAMPART)
-                        && (structure.hits < 3000);
+                        && (structure.hits < 5000);
                 }
             });
             //console.log('waller', this.WALL_MAX, targets);
@@ -47,9 +47,9 @@ var roleWallBuilder = {
                     creep.moveTo(target);
             }
             else
-            {// repairng
-                var other_job = require('role.healer');
-                other_job.action(creep);
+            {
+                var scavenger = require('role.scavenger');
+                scavenger.action(creep);
             }
         }
     }
