@@ -57,9 +57,9 @@ var roleHauler = {
                 }});
             }
 
-            if(targets.length)
+            if(targets.length) {
                 var target = creep.pos.findClosestByRange(targets);
-                if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                if(creep.transfer(target, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE)
                     creep.moveTo(target);
             }
         }

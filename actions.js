@@ -2,9 +2,25 @@ module.exports = {
     harvest: function(creep) {
         if(creep.carry.energy < creep.carryCapacity)
         {
-            var nearest = creep.pos.findClosestByPath(FIND_SOURCES);
-            if(creep.harvest(nearest) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(nearest);
+
+            var energies = creep.pos.findInRange(FIND_DROPPED_ENERGY, 10);
+            if(energies.length)
+            {
+                //console.log(creep, 'scavenging', energies);
+                var energy = creep.pos.findClosestByRange(energies);
+                if(creep.pickup(energy) == ERR_NOT_IN_RANGE)
+                    creep.moveTo(energy);
+                return true;
+            }
+
+            if(creep.memory.source)
+                var source = Game.getObjectById(creep.memory.source);
+            else
+                var source = creep.pos.findClosestByRange(FIND_SOURCES);
+
+            var err = creep.memory.errcode = creep.harvest(source);
+            if(err == ERR_NOT_IN_RANGE) {
+                creep.moveTo(source);
             }
             return true;
         }

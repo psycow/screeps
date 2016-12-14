@@ -12,30 +12,28 @@ var controller = {
         console.log('Initialization!');
         Memory.initialized = true;
         Memory.sources = {};
-        Memory.spawn_queue = [];
         Memory.population = {};
-        Memory.prev_update = 0;
     },
 
-    update: function() {
-        var time = Game.time;
-        if(Game.time < Memory.prev_update + 10)
-        {
-            //console.log('update ' + time);
-            manager.update();
-        }
-        Memory.prev_update = time;
-    },
-
-    loop: function () {
-        this.update();
-        for(var creep in Game.creeps) {
-            manager.execute(creep);
-        }
+    loop: function ()
+    {
+        //each tick
+        manager.execute();
         for(var id in Game.structures){
             if(Game.structures[id].structureType == STRUCTURE_TOWER){
                 tower.run(Game.structures[id])
             }
+        }
+        //console.log(Game.cpu.getUsed(), Game.cpu.tickLimit);
+
+        if(Game.time % 10 == 0)
+        {
+            manager.update();
+        }
+
+        if(Game.time % 1000 == 0)
+        {
+            manager.update_cache();
         }
     }
 };

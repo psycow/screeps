@@ -1,27 +1,32 @@
 var claimer = {
     name: 'claimer',
     parts: [
-        [CLAIM, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
+        [CLAIM, MOVE, MOVE, MOVE, MOVE],
     ],
 
-    move_to_room: function(creep, room) {
-        if(creep.room.name == room)
-            return true;
-
-        var exits = Game.map.findExit(creep.room, creep.memory.targetRoom)
-        var exit = creep.pos.findClosestByRange(exits)
-        creep.moveTo(exit);
-    },
-
     action: function(creep){
-        if(!this.move_to_room(creep, creep.memory.targetRoom))
+        if(!this.move_to_room(creep, creep.memory.roomName))
             creep.memory.expiresAt += 1
         else
         {
-            if(creep.room.controller) {
-                if(creep.reserveController(creep.room.controller) == ERR_NOT_IN_RANGE) {
-                    creep.memory.expiresAt += 1
-                    creep.moveTo(creep.room.controller);
+            var rc = creep.room.controller;
+            if(!rc.my) {
+                if(creep.attackController(rc) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(rc);
+                }
+            }
+            if(rc) {
+                if(creep.memory.reserve) {
+                    if(creep.reserveController(rc) == ERR_NOT_IN_RANGE) {
+                        creep.memory.expiresAt += 1
+                        creep.moveTo(rc);
+                    }
+                }
+                else {
+                    if(creep.claimController(rc) == ERR_NOT_IN_RANGE) {
+                        creep.memory.expiresAt += 1
+                        creep.moveTo(rc);
+                    }
                 }
             }
         }

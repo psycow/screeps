@@ -3,53 +3,87 @@ var proto = require('role.prototype');
 var names = require('names');
 var config = require('config');
 
+
 module.exports = {
-
-    population: {
-        1: {miner:1, hauler:1, upgrader:1},
-        2: {miner:4, hauler:2, upgrader:3, builder:2, healer:1, guard:1, waller:1},
-        3: {miner:4, hauler:3, upgrader:4, builder:4, healer:1, guard:4, waller:2, taxi:0},
-        4: {miner:4, hauler:3, upgrader:2, builder:2, healer:0, guard:2, waller:0, taxi:4},
-    },
-
     update: function() {
         this.clean_memory();
+        //Memory.max_spawn_cost = _.sum(_.map(Game.spawns['Spawn1'].room.find(FIND_STRUCTURES), 'energy'));
 
-        //counts max spawn cost
-        Memory.max_spawn_cost = _.sum(_.map(Game.spawns['Spawn1'].room.find(FIND_STRUCTURES), 'energy'));
-        this.grow_population();
-        this.defence();
+        for(var roomName in config.colonies)
+        {
+            var setup = config.colonies[roomName];
+            var timer = setup.timer || 1;
+            if(Game.time > timer) {
+                //console.log(roomName);
+                this.defence(roomName);
+                this.update_population(roomName, setup.population, setup.spawn_from);
+            }
+        }
     },
 
-    defence: function() {
-        var targets = Game.spawns['Spawn1'].room.find(FIND_HOSTILE_CREEPS);
+    update_cache: function()
+    {
+        //update cache
+        Memory.storages = Memory.storages || {};
+
+        for(var roomName in config.colonies)
+        {
+            var room = Game.rooms[roomName];
+            if(!room)
+                return;
+            var setup = config.colonies[roomName];
+            if(setup.storages) {
+                Memory.storages[roomName] = setup.storages;
+            } else {
+                var targets = _.filter(room.find(FIND_STRUCTURES), function(s) {
+                                    return ((s.structureType == STRUCTURE_CONTAINER
+                                          || s.structureType == STRUCTURE_STORAGE)
+                                            && s.pos.findInRange(FIND_SOURCES, 2).length == 0)});
+                Memory.storages[roomName] = _.pluck(targets, 'id');
+            }
+        }
+    },
+
+    defence: function(roomName) {
+        var room = Game.rooms[roomName];
+        if(!room)
+            return;
+
+        var targets = room.find(FIND_HOSTILE_CREEPS);
         if(targets.length) {
             if(this.count('guard') < targets.length)
                 this.spawn('guard');
         }
     },
 
-    grow_population: function() {
-        var level = Game.spawns['Spawn1'].room.controller.level;
-        var pop = this.population[level];
-        for(var role in pop)
+    update_population: function(roomName, population, spawn_from)
+    {
+        for(var n in population)
         {
-            var num = this.count(role);
+            var record = population[n];
+            var role = record.role;
+            var max = record.max;
+            var mem = record.memory || {roomName:roomName};
+            var num = this.count(role, mem);
             Memory.population[role] = num;
-            if(role == 'hauler') {
-                pop[role] = _.sum(_.map(_.filter(Game.creeps, (creep) => creep.memory.role == 'miner'),
-                                                        (creep) => creep.memory.haulers_needed));
-            }
-            if(num < pop[role]) {
-                console.log('Manger.spawn : '+role + ' ' + num + '/' + pop[role]);
-                this.spawn(role);
+
+            if(record.debug)
+                console.log('Pop:', n, role, num, max);
+            if(num < max) {
+                //console.log('Manger.spawn : '+role + ' ' + num + '/' + max);
+                mem.roomName = roomName;
+                return this.spawn(role, mem, spawn_from);
             }
         }
-        return pop;
     },
 
-    count: function(role) {
-        return _.filter(Game.creeps, (creep) => creep.memory.role == role).length;
+    count: function(role, match, roomName) {
+        var elements = _.filter(Game.creeps, (creep) => (creep.memory.role == role));
+        if(match)
+            elements = _.filter(elements, (creep)=>(_.isMatch(creep.memory, match)));
+        if(roomName)
+            elements = _.filter(elements, (creep) => (creep.room.name == roomName));
+        return elements.length;
     },
 
     clean_memory: function(role) {
@@ -65,18 +99,24 @@ module.exports = {
 
     execute: function(name)
     {
-        var creep = Game.creeps[name];
-        var role = creep.memory.role;
-        var job = this.get(role);
-        if(!job) {
-            console.log('Unknown role : '+ role +' for creep '+ creep.name);
-            return;
-        }
-        try {
-            job.run(creep);
-        } catch(e) {
-            console.log('problem with '+role+ ' : '+name);
-            console.log('  ' +e);
+        var creeps = _.sortBy(Game.creeps, (c)=>(c.memory.priority || 0)) ;
+        for(var n in creeps)
+        {
+            var creep = creeps[n];
+            if(creep.spawning)
+                continue;
+            var role = creep.memory.role;
+            var job = this.get(role);
+            if(!job) {
+                console.log('Unknown role : '+ role +' for creep '+ creep.name);
+                return;
+            }
+            try {
+                job.run(creep);
+            } catch(e) {
+                console.log('problem with '+role+ ' : '+creep.name);
+                console.log('  ' +e);
+            }
         }
     },
 
@@ -90,22 +130,43 @@ module.exports = {
         }
     },
 
-    spawn: function(role, memory) {
+    spawn: function(role, memory, spawn_from) {
         var obj = this.get(role);
         if(!obj)
             return false;
         if(memory == undefined)
             memory = {};
-        memory.role = role;
-        var body = obj.best_body();
-        var name = '[' + role + '] ' + names.get();
-        var name = Game.spawns['Spawn1'].createCreep(body, name, memory);
-        if(name < 0) {
-            console.log('unable to spawn', name);
-            return false;
-        } else {
-            console.log('Spawning new ' + role + ' "' + name + '" : ' + body);
+        if(spawn_from == undefined)
+            spawn_from = ['Spawn1'];
+
+        for(var n in spawn_from)
+        {
+            var spawn = Game.spawns[spawn_from[n]];
+            if(!spawn)
+                return;
+            Memory.max_spawn_cost = _.sum(_.map(spawn.room.find(FIND_STRUCTURES), 'energy'));
+
+            if(!spawn.spawning)
+            {
+                memory.role = role;
+                memory.priority = obj.priority || 0;
+                var body = obj.best_body();
+                if(!body)
+                    return false;
+
+                //var name = '[' + role + '] ' + names.get();
+                var name = role + (Game.time + '').substr(-4);
+                var err = spawn.createCreep(body, name, memory);
+                if(err < 0) {
+                    console.log('unable to spawn: ', name, err);
+                    console.log('   ', body, name, memory);
+                    return false;
+                } else {
+                    console.log(spawn_from[n], 'new ' + role + ' "' + name + '" : ' + body);
+                }
+                return Game.creeps[name];
+            }
         }
-        return Game.creeps[name];
+        return false;
     }
 };

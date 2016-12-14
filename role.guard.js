@@ -3,7 +3,9 @@ var guard = {
     parts: [
         [TOUGH, MOVE, ATTACK, ATTACK],
         [TOUGH, MOVE, MOVE, ATTACK, ATTACK],
-        [TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK]
+        [TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK]
+        [TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE,
+         ATTACK, ATTACK, ATTACK, ATTACK, ATTACK]
     ],
 
     action: function(creep)

@@ -1,3 +1,5 @@
+var config = require('config');
+
 var tower = {
     run: function(tower) {
         var closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
@@ -5,10 +7,11 @@ var tower = {
             console.log('FIRE')
             tower.attack(closestHostile);
         } else {
+            var wall_max = config[tower.pos.roomName].wall_max || 5000;
             var repairTargets = tower.pos.findInRange(FIND_STRUCTURES, 30, {
                 filter: function(structure){
                     if(structure.structureType == STRUCTURE_WALL || structure.structureType == STRUCTURE_RAMPART) {
-                        return (structure.hits < 5000)
+                        return (structure.hits < wall_max)
                     } else {
                         return (structure.hits < structure.hitsMax)
                     }
