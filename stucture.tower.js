@@ -7,7 +7,7 @@ var tower = {
             console.log('FIRE')
             tower.attack(closestHostile);
         } else {
-            var wall_max = config[tower.pos.roomName].wall_max || 5000;
+            var wall_max = config.colonies[tower.pos.roomName].wall_max || 5000;
             var repairTargets = tower.pos.findInRange(FIND_STRUCTURES, 30, {
                 filter: function(structure){
                     if(structure.structureType == STRUCTURE_WALL || structure.structureType == STRUCTURE_RAMPART) {
